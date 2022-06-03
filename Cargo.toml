@@ -1,0 +1,10 @@
+[package]
+name = "csse2310_assignment4_2019_rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "lib"
+path = "src/lib.rs"
+
+[dependencies]
