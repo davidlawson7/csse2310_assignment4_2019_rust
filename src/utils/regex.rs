@@ -1,8 +1,3 @@
-// SAY:
-// LIST:
-// KICK:
-// LEAVE:
-
 use std::str::FromStr;
 
 /// Checks a value for one of the patterns provided. Upon finding that pattern, returns whether it found it, followed
@@ -12,15 +7,12 @@ pub fn check_message<'text>(
   text: &'text str,
   patterns: &[&str],
 ) -> Result<(ClientCommands, &'text str), &'static str> {
+  println!("message {}", text);
   let opt = match_str_patterns(text, patterns).ok();
 
   if !opt.is_none() {
-    let (pattern, contents) = opt.unwrap();
-    match pattern {
-      ClientCommands::SAY | ClientCommands::LIST | ClientCommands::KICK | ClientCommands::LEAVE => {
-        return Ok((pattern, contents));
-      }
-    }
+    let res = opt.unwrap();
+    return Ok(res);
   }
   return Err("Bad message");
 }
@@ -63,10 +55,15 @@ fn match_str<'text>(text: &'text str, pattern: &str) -> Result<&'text str, &'sta
 }
 
 pub enum ClientCommands {
+  AUTH,
   SAY,
   LIST,
   KICK,
   LEAVE,
+  NAME,
+  NAMETAKEN,
+  WHO,
+  OK,
 }
 
 impl FromStr for ClientCommands {
@@ -74,14 +71,15 @@ impl FromStr for ClientCommands {
 
   fn from_str(input: &str) -> Result<ClientCommands, Self::Err> {
     match input {
-      "SAY" => Ok(ClientCommands::SAY),
-      "SAY:" => Ok(ClientCommands::SAY),
-      "LIST" => Ok(ClientCommands::LIST),
-      "LIST:" => Ok(ClientCommands::LIST),
-      "KICK" => Ok(ClientCommands::KICK),
-      "KICK:" => Ok(ClientCommands::KICK),
-      "LEAVE" => Ok(ClientCommands::LEAVE),
-      "LEAVE:" => Ok(ClientCommands::LEAVE),
+      "SAY" | "SAY:" => Ok(ClientCommands::SAY),
+      "LIST" | "LIST:" => Ok(ClientCommands::LIST),
+      "KICK" | "KICK:" => Ok(ClientCommands::KICK),
+      "LEAVE" | "LEAVE:" => Ok(ClientCommands::LEAVE),
+      "AUTH" | "AUTH:" => Ok(ClientCommands::AUTH),
+      "NAME" | "NAME:" => Ok(ClientCommands::NAME),
+      "WHO" | "WHO:" => Ok(ClientCommands::WHO),
+      "NAMETAKEN" | "NAMETAKEN:" => Ok(ClientCommands::NAMETAKEN),
+      "OK" | "OK:" => Ok(ClientCommands::OK),
       _ => Err(()),
     }
   }
