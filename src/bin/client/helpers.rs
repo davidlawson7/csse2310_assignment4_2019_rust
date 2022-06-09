@@ -1,8 +1,6 @@
-use lib::utils::regex::{check_message, ClientCommands};
+use lib::utils::regex::Commands;
 use std::io;
-use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::net::TcpStream;
-use std::sync::{Arc, Mutex};
+use std::io::Write;
 
 pub struct ArgsClient {
   pub name: String,
@@ -35,35 +33,12 @@ pub fn read_stdin() -> Result<String, io::Error> {
   return Ok(buffer.to_string());
 }
 
-/// Takes a protected reader on a stream, and a set of allowed commands, and attempts to read that from the stream. Errors are propagated upwards.
-pub fn receive(
-  reader: &mut Arc<Mutex<BufReader<TcpStream>>>,
-  commands: &[&str],
-) -> Result<(ClientCommands, String), io::Error> {
-  println!("starting receive");
-  let mut buffer = String::new();
-  // let r = Arc::clone(&reader);
-  let mut locked_reader = reader.lock().unwrap();
-  println!("Got lock on reader");
-  locked_reader.read_line(&mut buffer).unwrap();
-  println!("Got msg: {}", buffer);
-  let res = check_message(&buffer, commands);
-  println!("Checked message");
+pub fn process_enter(_c: Commands, _msg: &str) {}
 
-  match res {
-    Ok((command, msg)) => {
-      return Ok((command, msg.to_string()));
-    }
-    Err(_err) => {
-      return Err(io::Error::new(io::ErrorKind::Other, "oh no!"));
-    }
-  }
-}
+pub fn process_leave(_c: Commands, _msg: &str) {}
 
-/// Takes a protected writer on a stream, and a string message, and attempts to send that via the stream. Errors are propagated upwards.
-pub fn send(writer: &mut Arc<Mutex<BufWriter<TcpStream>>>, msg: &str) -> Result<(), io::Error> {
-  let mut locked_writer = writer.lock().unwrap();
-  locked_writer.write(msg.as_bytes())?;
-  locked_writer.flush()?;
-  return Ok(());
-}
+pub fn process_msg(_c: Commands, _msg: &str) {}
+
+pub fn process_kick(_c: Commands) {}
+
+pub fn process_list(_c: Commands, _msg: &str) {}
