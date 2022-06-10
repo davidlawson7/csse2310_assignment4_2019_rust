@@ -29,8 +29,12 @@ pub fn read_stdin() -> Result<String, io::Error> {
   let stdin = io::stdin();
   let mut buffer = String::new();
   stdin.read_line(&mut buffer)?;
-  stdout.flush()?;
-  return Ok(buffer.to_string());
+
+  let first_byte = buffer.bytes().nth(0).unwrap();
+  if first_byte == b'*' {
+    return Ok(buffer[1..].to_string()); // Remove * at front, send verbatim
+  }
+  return Ok(format!("SAY: {buffer}"));
 }
 
 pub fn process_enter(_c: Commands, _msg: &str) {}

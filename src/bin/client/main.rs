@@ -14,7 +14,7 @@ fn main() {
   client().expect("failed to start client");
 }
 
-fn client() -> Result<&'static str, Error> {
+fn client() -> Result<(), Error> {
   let args: helpers::ArgsClient = parse_client();
   let secret = parse_secret(&args.authfile);
 
@@ -29,35 +29,12 @@ fn client() -> Result<&'static str, Error> {
 
   let _name = negotiate_with_server(&mut reader, &mut writer, &secret)?;
 
-  thread::spawn(move || loop {
-    let incoming = communication::receive(&mut reader, &["ENTER", "LEAVE", "MSG", "KICK", "LIST"]);
-    match incoming {
-      Ok((command, msg)) => {
-        println!("READY FOR PROCESSING => {command}:{msg}");
-        match command {
-          Commands::ENTER => helpers::process_enter(command, &msg),
-          Commands::LEAVE => helpers::process_leave(command, &msg),
-          Commands::MSG => helpers::process_msg(command, &msg),
-          Commands::KICK => helpers::process_kick(command),
-          Commands::LIST => helpers::process_list(command, &msg),
-          _ => println!("Receieved a message the client shouldnt, {command} - {msg}."),
-        }
-      }
-      Err(_err) => {
-        println!("READER: server terminated connection");
-        break;
-      }
-    }
+  thread::spawn(move || {
+    handle_incoming(&mut reader);
   });
 
-  // In the current thread, handle outgoing traffic from the client
-  let sleep_time = std::time::Duration::from_millis(100);
-  loop {
-    println!("ready for input");
-    let input = helpers::read_stdin().unwrap();
-    communication::send(&mut writer, &input).unwrap();
-    thread::sleep(sleep_time);
-  }
+  handle_input(&mut writer)?;
+  return Ok(());
 }
 
 /// Negotiate with the chat server a position in the server. Returns the determined name on the server if successful, else propogates a error upwards.
@@ -88,5 +65,40 @@ pub fn negotiate_with_server(
         return Err(Error::new(ErrorKind::Other, "Negotiations broke down..."));
       }
     }
+  }
+}
+
+fn handle_incoming(reader: &mut BufReader<TcpStream>) {
+  loop {
+    let incoming = communication::receive(reader, &["ENTER", "LEAVE", "MSG", "KICK", "LIST"]);
+    match incoming {
+      Ok((command, msg)) => {
+        println!("READY FOR PROCESSING => {command}:{msg}");
+        match command {
+          Commands::ENTER => helpers::process_enter(command, &msg),
+          Commands::LEAVE => helpers::process_leave(command, &msg),
+          Commands::MSG => helpers::process_msg(command, &msg),
+          Commands::KICK => helpers::process_kick(command),
+          Commands::LIST => helpers::process_list(command, &msg),
+          _ => println!("Receieved a message the client shouldnt, {command} - {msg}."),
+        }
+      }
+      Err(_err) => {
+        println!("READER: server terminated connection");
+        break;
+      }
+    }
+  }
+}
+
+fn handle_input(writer: &mut BufWriter<TcpStream>) -> Result<(), Error> {
+  // In the current thread, handle outgoing traffic from the client
+  let sleep_time = std::time::Duration::from_millis(100);
+  loop {
+    print!("> ");
+    std::io::stdout().flush()?;
+    let formatted_input = helpers::read_stdin()?;
+    communication::send(writer, &formatted_input).unwrap();
+    thread::sleep(sleep_time);
   }
 }

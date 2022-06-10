@@ -26,7 +26,7 @@ pub fn check_message(text: &str, patterns: &[&str]) -> Result<(Commands, String)
   return Err(io::Error::new(io::ErrorKind::Unsupported, INVALID_COMMAND));
 }
 
-fn match_str<'text>(text: &'text str, pattern: &str) -> Result<&'text str, &'static str> {
+pub fn match_str<'text>(text: &'text str, pattern: &str) -> Result<&'text str, &'static str> {
   let pattern_len = pattern.chars().count();
   if text.chars().count() < pattern_len {
     return Err(STRING_TO_SHORT);

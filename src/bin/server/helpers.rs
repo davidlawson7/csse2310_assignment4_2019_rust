@@ -1,7 +1,7 @@
 use lib::utils::communication;
 use lib::utils::regex::Commands;
 use std::io;
-use std::io::{BufReader, BufWriter};
+use std::io::{BufReader, BufWriter, Write};
 use std::net::TcpStream;
 
 pub struct ArgsServer {
@@ -19,7 +19,8 @@ pub fn server_receive(
 }
 
 pub fn server_send(writer: &mut BufWriter<TcpStream>, msg: &str) -> Result<(), io::Error> {
-  println!("(server) {msg}");
+  print!("(server) {msg}");
+  std::io::stdout().flush()?;
   return communication::send(writer, msg);
 }
 
